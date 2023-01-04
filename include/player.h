@@ -8,7 +8,7 @@
 class Player {
 protected:
     std::unique_ptr<PlayerStats> stats;
-    Player(char, std::pair<int, int>&&);
+    Player(int, int, int, char, std::pair<int, int>&&);
     // virtual void trigger(); This will be for gold pickups
 
 public:
@@ -17,9 +17,7 @@ public:
     const PlayerStats& get_stats() const noexcept { return *stats; }
 
     void move(Direction dir) noexcept { stats->move(dir); }
-    // virtual void use(Direction);
-    // void attack(Direction);
-    virtual void pickup_gold(int amount) { stats->change_gold(amount); }
+    // virtual void pickup_gold(int amount) { stats->change_gold(amount); }
 };
 
 #endif

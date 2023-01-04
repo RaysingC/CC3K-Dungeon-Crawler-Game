@@ -4,8 +4,11 @@
 #include <string>
 #include <array>
 #include <memory>
+#include <map>
 #include "cell.h"
 #include "player.h"
+#include "enemy.h"
+#include "item.h"
 
 // class Player;
 class PlayerStats;
@@ -25,8 +28,8 @@ class Chamber {
     CellArray grid;
     std::pair<char, Direction> playerNextAction; // consider using a scoped enum for actions instead of a char
     std::unique_ptr<Player> player;
-    // std::vector<std::unique_ptr<Enemy>> enemies;
-    // std::vector<std::unique_ptr<Item>> items;
+    std::map<std::pair<int, int>, std::unique_ptr<Enemy>> enemies;
+    std::map<std::pair<int, int>, std::unique_ptr<Item>> items;
 
     Cell& cell_in_dir(int, int, Direction) noexcept; // invalid or out of bounds returns the current cell
 

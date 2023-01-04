@@ -80,7 +80,7 @@ CellArray make_grid(const std::string& layout) {
 }
 
 Chamber::Chamber(const std::string& layout) : race{'h'}, grid{make_grid(layout)},
-    playerNextAction{std::make_pair('m', Direction::X)}, player{nullptr} {}
+    playerNextAction{std::make_pair('m', Direction::X)}, player{nullptr}, enemies{}, items{} {}
 
 void Chamber::set_player_action(char action, Direction dir) /*noexcept*/ {
     auto& [ oldaction, olddir ] = playerNextAction;
@@ -146,10 +146,17 @@ void Chamber::next_turn() /*noexcept*/ {
         }
         player->move(dir);
         targetCell.occupy();
+        // use ContactItems
     } else if (action == 'u') {
-        
-    } else if (action == 'a') {
+        if (targetCell.is_occupied() /* &&
+            search the unordered_map holding the items*/) {
 
+        }
+    } else if (action == 'a') {
+        if (targetCell.is_occupied() /* &&
+            search the unordered_map holding the enemies*/) {
+
+        }
     }
     // call passives on player and enemies, check descend logic?
 }

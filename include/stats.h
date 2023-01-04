@@ -24,11 +24,10 @@ public:
 class PlayerStats : public Stats {
     char race;
     int gold;
-    PlayerStats(int maxhp, int atk, int def, std::pair<int, int>&& pos, char race)
-        : Stats(maxhp, atk, def, std::move(pos)), race{race}, gold{0} {}
 
 public:
-    static std::unique_ptr<PlayerStats> init(char, std::pair<int, int>&&);
+    PlayerStats(int maxhp, int atk, int def, std::pair<int, int>&& pos, char race)
+        : Stats(maxhp, atk, def, std::move(pos)), race{race}, gold{0} {}
     std::tuple<int, int, int, char, int> get_tuple() const noexcept {
         return std::make_tuple(hp, atk, def, race, gold);
     }
