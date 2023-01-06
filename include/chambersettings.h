@@ -16,5 +16,7 @@ namespace ChamberSettings {
     std::default_random_engine& get_generator() noexcept;
 }
 
+// note: defining functions directly in the header file will likely cause linking errors from multiple definitions
+//   inline solves this but also... you inline the function
 
 #endif

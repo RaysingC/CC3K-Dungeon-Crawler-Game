@@ -3,7 +3,6 @@
 #include "stats.h"
 #include "direction.h"
 #include <iostream>
-#include <sstream>
 #include <vector>
 #include <random>
 #include <chrono>
@@ -62,19 +61,14 @@ using CellArray = std::array<Cell, ChamberSettings::width() * ChamberSettings::h
 
 CellArray make_grid(const std::string& layout) {
     CellArray cellarray;
-    std::istringstream iss{layout};
-
-    int i = 0;
-    constexpr int totalSize = ChamberSettings::width() * ChamberSettings::height();
-    while (i < totalSize) {
-        char celltype;
-        iss >> std::noskipws >> celltype;
-        if (celltype == '\n') {
-            continue;
-        }
-        cellarray[i] = Cell{celltype};
-        ++i;
+    int size = layout.size();
+    if (size != ChamberSettings::width() * ChamberSettings::height()) {
+        std::cerr << "Error: Layout is not 79 by 25";
+        throw "gridSizeError";
     }
+
+    for (int i = 0; i < size; ++i)
+        cellarray[i] = Cell{layout[i]};
 
     return cellarray;
 }
