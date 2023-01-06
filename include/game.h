@@ -6,7 +6,6 @@
 #include "chamber.h"
 
 class Game {
-    int floorNumber;
     Chamber chamber;
 
     void prompt_race();

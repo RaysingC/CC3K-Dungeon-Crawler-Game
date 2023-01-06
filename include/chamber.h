@@ -15,6 +15,7 @@ enum class Direction;
 class Chamber {
     using CellArray = std::array<Cell, ChamberSettings::width() * ChamberSettings::height()>;
 
+    int floorNumber;
     char race;
     CellArray grid;
     std::pair<char, Direction> playerNextAction; // consider using a scoped enum for actions instead of a char
@@ -33,6 +34,7 @@ public:
     void spawn_all();
     void next_turn();
     void print() const noexcept; // should this have noexcept?
+    int get_floor() const noexcept { return floorNumber; }
 };
 
 #endif

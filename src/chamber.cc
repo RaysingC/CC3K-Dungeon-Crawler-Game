@@ -73,7 +73,7 @@ CellArray make_grid(const std::string& layout) {
     return cellarray;
 }
 
-Chamber::Chamber(const std::string& layout) : race{'h'}, grid{make_grid(layout)},
+Chamber::Chamber(const std::string& layout) : floorNumber{1}, race{'h'}, grid{make_grid(layout)},
     playerNextAction{std::make_pair('m', Direction::X)}, player{nullptr} {}
 
 void Chamber::set_player_action(char action, Direction dir) /*noexcept*/ {
