@@ -8,8 +8,7 @@
 #include "player.h"
 
 static std::string extract_layout(const std::string& layoutFile) {
-    std::cout << "Custom file layouts are currently not supported\n";
-    std::ifstream layoutfs{"./src/default_grid.txt"}; // path relative to makefile
+    std::ifstream layoutfs{layoutFile}; // path relative to makefile
     std::string noNewlineLayout;
 
     char cell;
@@ -62,7 +61,6 @@ void Game::play() {
     chamber.spawn_all();
     print("");
 
-    // code duplication
     std::string cmd;
     while (std::cin >> cmd) {
         if (cmd == "r") {
@@ -76,6 +74,7 @@ void Game::play() {
 
         Direction dir = Direction::X;
         char action = 'm';
+
         if (DirUtils::valid_dir_input(cmd)) {
             dir = DirUtils::str_input_to_dir(cmd);
             action = 'm';

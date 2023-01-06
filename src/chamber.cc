@@ -63,7 +63,7 @@ CellArray make_grid(const std::string& layout) {
     CellArray cellarray;
     int size = layout.size();
     if (size != ChamberSettings::width() * ChamberSettings::height()) {
-        std::cerr << "Error: Layout is not 79 by 25";
+        std::cerr << "Error: Layout is not 79 by 25\n";
         throw "gridSizeError";
     }
 
