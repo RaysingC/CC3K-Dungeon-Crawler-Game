@@ -1,12 +1,9 @@
 #include "direction.h"
-#include <random>
-#include <chrono>
+#include "chambersettings.h"
 
 namespace DirUtils {
     Direction rand_dir() {
-        unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-        std::default_random_engine rng{seed};
-        return static_cast<Direction>(rng() % 9);
+        return static_cast<Direction>(ChamberSettings::rng() % 9);
     }
 
     Direction str_input_to_dir(const std::string& dir) noexcept {

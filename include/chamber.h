@@ -7,28 +7,23 @@
 #include <map>
 #include "cell.h"
 #include "player.h"
-#include "enemy.h"
+// #include "enemy.h"
 #include "item.h"
+#include "chambersettings.h"
 
 // class Player;
 class PlayerStats;
 enum class Direction;
 
-namespace ChamberDimensions {
-    // preferring functions to variables because "relative order of initialization
-    // for non-local static variables is undefined"
-    inline constexpr int width() { return 79; }
-    inline constexpr int height() { return 25; }
-}
-
 class Chamber {
-    using CellArray = std::array<Cell, ChamberDimensions::width() * ChamberDimensions::height()>;
+    using CellArray = std::array<Cell, ChamberSettings::width() * ChamberSettings::height()>;
 
     char race;
     CellArray grid;
     std::pair<char, Direction> playerNextAction; // consider using a scoped enum for actions instead of a char
     std::unique_ptr<Player> player;
-    std::map<std::pair<int, int>, std::unique_ptr<Enemy>> enemies;
+    // std::map<std::pair<int, int>, std::unique_ptr<Enemy>> enemies;
+    std::map<std::pair<int, int>, std::unique_ptr<ContactItem>> citems;
     std::map<std::pair<int, int>, std::unique_ptr<Item>> items;
 
     Cell& cell_in_dir(int, int, Direction) noexcept; // invalid or out of bounds returns the current cell
