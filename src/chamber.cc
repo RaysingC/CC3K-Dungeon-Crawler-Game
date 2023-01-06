@@ -12,9 +12,9 @@
 // bounds checking is applied here so players don't cause a segfault when moving at the edges
 Cell& Chamber::cell_in_dir(int x, int y, Direction dir) noexcept {
     bool onLeftEdge = x == 0,
-        onRightEdge = x == ChamberDimensions::width() - 1,
+        onRightEdge = x == ChamberSettings::width() - 1,
         onTopEdge = y == 0,
-        onBottomEdge = y == ChamberDimensions::height() - 1;
+        onBottomEdge = y == ChamberSettings::height() - 1;
     switch(dir) {
         case Direction::NW:
             if (!onTopEdge && !onLeftEdge) {
@@ -55,17 +55,17 @@ Cell& Chamber::cell_in_dir(int x, int y, Direction dir) noexcept {
         default:
             break;
     }
-    return grid[y * ChamberDimensions::width() + x];
+    return grid[y * ChamberSettings::width() + x];
 }
 
-using CellArray = std::array<Cell, ChamberDimensions::width() * ChamberDimensions::height()>;
+using CellArray = std::array<Cell, ChamberSettings::width() * ChamberSettings::height()>;
 
 CellArray make_grid(const std::string& layout) {
     CellArray cellarray;
     std::istringstream iss{layout};
 
     int i = 0;
-    constexpr int totalSize = ChamberDimensions::width() * ChamberDimensions::height();
+    constexpr int totalSize = ChamberSettings::width() * ChamberSettings::height();
     while (i < totalSize) {
         char celltype;
         iss >> std::noskipws >> celltype;
@@ -95,7 +95,7 @@ const PlayerStats& Chamber::player_stats() const {
 using vecOfCoords = std::vector<std::pair<int, int>>;
 
 static void addCellsToChamber(CellArray& tempgrid, vecOfCoords& chamber, int x, int y) {
-    Cell& cell = tempgrid[y * ChamberDimensions::width() + x];
+    Cell& cell = tempgrid[y * ChamberSettings::width() + x];
     if (cell.get_type() == '.') {
         chamber.emplace_back(std::make_pair(x, y));
         cell = Cell{'X'};
@@ -110,9 +110,9 @@ void Chamber::spawn_all() {
     std::vector<vecOfCoords> chambers;
     CellArray tempgrid = grid; // making a tempgrid is slow and heavy
 
-    for (int y = 0; y < ChamberDimensions::height(); ++y) {
-        for (int x = 0; x < ChamberDimensions::width(); ++x) {
-            const Cell& cell = tempgrid[y * ChamberDimensions::width() + x];
+    for (int y = 0; y < ChamberSettings::height(); ++y) {
+        for (int x = 0; x < ChamberSettings::width(); ++x) {
+            const Cell& cell = tempgrid[y * ChamberSettings::width() + x];
             if (cell.get_type() == '.') {
                 chambers.emplace_back(vecOfCoords{});
                 addCellsToChamber(tempgrid, chambers.back(), x, y);
@@ -121,12 +121,10 @@ void Chamber::spawn_all() {
     }
 
     // 2. spawn player in one of them
-    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-    std::default_random_engine rng{seed};
-    std::shuffle(chambers.begin(), chambers.end(), rng);
+    std::shuffle(chambers.begin(), chambers.end(), ChamberSettings::get_generator());
 
     for (auto& chamber : chambers) {
-        std::shuffle(chamber.begin(), chamber.end(), rng);
+        std::shuffle(chamber.begin(), chamber.end(), ChamberSettings::get_generator());
     }
 
     player = Player::make_player(race, std::move(chambers[0].back()));
@@ -136,7 +134,7 @@ void Chamber::spawn_all() {
 void Chamber::next_turn() /*noexcept*/ {
     auto [ action, dir ] = playerNextAction;
     const auto& [ playerx, playery ] = player->get_stats().get_pos();
-    Cell& currentCell = grid[playery * ChamberDimensions::width() + playerx];
+    Cell& currentCell = grid[playery * ChamberSettings::width() + playerx];
     Cell& targetCell = cell_in_dir(playerx, playery, dir);
 
     if (action == 'm') {
@@ -155,20 +153,20 @@ void Chamber::next_turn() /*noexcept*/ {
 }
 
 void Chamber::print() const noexcept {
-    constexpr int totalSize = ChamberDimensions::width() * ChamberDimensions::height();
+    constexpr int totalSize = ChamberSettings::width() * ChamberSettings::height();
     std::array<char, totalSize> display;
     for (int i = 0; i < totalSize; ++i) {
         display[i] = grid[i].get_type();
     }
 
     const auto& [ playerx, playery ] = player->get_stats().get_pos();
-    display[playery * ChamberDimensions::width() + playerx] = '@';
+    display[playery * ChamberSettings::width() + playerx] = '@';
 
     // do the same for enemies
 
-    for (int y = 0; y < ChamberDimensions::height(); ++y) {
-        for (int x = 0; x < ChamberDimensions::width(); ++x)
-            std::cout << display[y * ChamberDimensions::width() + x];
+    for (int y = 0; y < ChamberSettings::height(); ++y) {
+        for (int x = 0; x < ChamberSettings::width(); ++x)
+            std::cout << display[y * ChamberSettings::width() + x];
         std::cout << '\n';
     }
 }

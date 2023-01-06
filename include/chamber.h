@@ -6,20 +6,14 @@
 #include <memory>
 #include "cell.h"
 #include "player.h"
+#include "chambersettings.h"
 
 // class Player;
 class PlayerStats;
 enum class Direction;
 
-namespace ChamberDimensions {
-    // preferring functions to variables because "relative order of initialization
-    // for non-local static variables is undefined"
-    inline constexpr int width() { return 79; }
-    inline constexpr int height() { return 25; }
-}
-
 class Chamber {
-    using CellArray = std::array<Cell, ChamberDimensions::width() * ChamberDimensions::height()>;
+    using CellArray = std::array<Cell, ChamberSettings::width() * ChamberSettings::height()>;
 
     char race;
     CellArray grid;

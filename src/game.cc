@@ -81,6 +81,7 @@ void Game::play() {
             }
         } else if (cmd == "r") {
             floorNumber = 1;
+            prompt_race();
             chamberptr->spawn_all();
             print("");
         } else if (cmd == "q") {
@@ -93,6 +94,6 @@ void Game::play() {
 
 void Game::end_game_message() const {
     const auto& [ hp, atk, def, race, gold ] = chamberptr->player_stats().get_tuple();
-    std::cout << "You " << (hp != 0 && floorNumber == 6 ? "BEAT THE GAME" : "DIED") << " WITH A SCORE OF "
+    std::cout << "YOU " << (hp != 0 && floorNumber == 6 ? "BEAT THE GAME" : "DIED") << " WITH A SCORE OF "
         << (race == 'h' ? gold + (gold / 2) : gold) << '\n';
 }
