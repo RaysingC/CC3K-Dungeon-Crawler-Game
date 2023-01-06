@@ -1,6 +1,5 @@
 #include "game.h"
 #include <fstream>
-#include <sstream>
 #include <iostream>
 #include "direction.h"
 #include "race.h"
@@ -8,28 +7,27 @@
 #include "chamber.h"
 #include "player.h"
 
-// sends newlines to the chamber constructor :(
 static std::string extract_layout(const std::string& layoutFile) {
-    std::cout << "Custom file layouts are currently not supported\n";
-    std::ifstream layoutfs{"./src/default_grid.txt"}; // makefile is outside of src
-    std::ostringstream oss;
-    
-    if (layoutfs) {
-        oss << layoutfs.rdbuf();
+    std::ifstream layoutfs{layoutFile}; // path relative to makefile
+    std::string noNewlineLayout;
+
+    char cell;
+    while (layoutfs >> std::noskipws >> cell) {
+        if (cell != '\n')
+            noNewlineLayout.push_back(cell);
     }
-    layoutfs.close();
-    return oss.str();
+    return noNewlineLayout;
 }
 
 Game::Game(const std::string& layoutFile)
-    : floorNumber{1}, chamberptr{std::make_unique<Chamber>(std::move(extract_layout(layoutFile)))} {}
+    : chamber{std::move(extract_layout(layoutFile))} {}
 
 // consider better exception handling
 void Game::prompt_race() {
     char r;
     while (std::cin >> r) {
         if (Race::valid_race(r)) {
-            chamberptr->set_race(r);
+            chamber.set_race(r);
             return;
         }
     }
@@ -48,8 +46,8 @@ static std::string action_message(char action, Direction dir) {
 }
 
 void Game::print(const std::string& actionMessage) const noexcept {
-    chamberptr->print();
-    const auto& [ hp, atk, def, race, gold ] = chamberptr->player_stats().get_tuple();
+    chamber.print();
+    const auto& [ hp, atk, def, race, gold ] = chamber.player_stats().get_tuple();
     std::cout << "Race: " << Race::full_name(race)
         << " Gold: " << gold << '\n'
         << "HP: " << hp << '\n'
@@ -60,40 +58,46 @@ void Game::print(const std::string& actionMessage) const noexcept {
 
 void Game::play() {
     prompt_race();
-    chamberptr->spawn_all();
+    chamber.spawn_all();
     print("");
 
-    // code duplication
     std::string cmd;
     while (std::cin >> cmd) {
-        if (DirUtils::valid_dir_input(cmd)) {
-            Direction dir = DirUtils::str_input_to_dir(cmd);
-            chamberptr->set_player_action('m', dir);
-            chamberptr->next_turn();
-            print(action_message('m', dir));
-        } else if (cmd == "a" || cmd == "u") {
-            std::string dir;
-            std::cin >> dir;
-            if (DirUtils::valid_dir_input(dir)) {
-                chamberptr->set_player_action(cmd.front(), DirUtils::str_input_to_dir(dir));
-                chamberptr->next_turn();
-                print(action_message(cmd.front(), DirUtils::str_input_to_dir(dir)));
-            }
-        } else if (cmd == "r") {
-            floorNumber = 1;
+        if (cmd == "r") {
             prompt_race();
-            chamberptr->spawn_all();
+            chamber.spawn_all();
             print("");
+            continue;
         } else if (cmd == "q") {
             break;
         }
+
+        Direction dir = Direction::X;
+        char action = 'm';
+
+        if (DirUtils::valid_dir_input(cmd)) {
+            dir = DirUtils::str_input_to_dir(cmd);
+            action = 'm';
+        } else if (cmd == "a" || cmd == "u") {
+            std::string inputDir;
+            std::cin >> inputDir;
+            if (DirUtils::valid_dir_input(inputDir)) {
+                dir = DirUtils::str_input_to_dir(inputDir);
+                action = cmd.front();
+            } else {
+                continue;
+            }
+        }
+        chamber.set_player_action(action, dir);
+        chamber.next_turn();
+        print(action_message(action, dir));
     }
 
     end_game_message();
 }
 
 void Game::end_game_message() const {
-    const auto& [ hp, atk, def, race, gold ] = chamberptr->player_stats().get_tuple();
-    std::cout << "YOU " << (hp != 0 && floorNumber == 6 ? "BEAT THE GAME" : "DIED") << " WITH A SCORE OF "
+    const auto& [ hp, atk, def, race, gold ] = chamber.player_stats().get_tuple();
+    std::cout << "YOU " << (hp != 0 && chamber.get_floor() == 6 ? "BEAT THE GAME" : "DIED") << " WITH A SCORE OF "
         << (race == 'h' ? gold + (gold / 2) : gold) << '\n';
 }

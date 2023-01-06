@@ -3,7 +3,6 @@
 #include "stats.h"
 #include "direction.h"
 #include <iostream>
-#include <sstream>
 #include <vector>
 #include <algorithm>
 
@@ -60,25 +59,20 @@ using CellArray = std::array<Cell, ChamberSettings::width() * ChamberSettings::h
 
 CellArray make_grid(const std::string& layout) {
     CellArray cellarray;
-    std::istringstream iss{layout};
-
-    int i = 0;
-    constexpr int totalSize = ChamberSettings::width() * ChamberSettings::height();
-    while (i < totalSize) {
-        char celltype;
-        iss >> std::noskipws >> celltype;
-        if (celltype == '\n') {
-            continue;
-        }
-        cellarray[i] = Cell{celltype};
-        ++i;
+    int size = layout.size();
+    if (size != ChamberSettings::width() * ChamberSettings::height()) {
+        std::cerr << "Error: Layout is not 79 by 25\n";
+        throw "gridSizeError";
     }
+
+    for (int i = 0; i < size; ++i)
+        cellarray[i] = Cell{layout[i]};
 
     return cellarray;
 }
 
-Chamber::Chamber(const std::string& layout) : race{'h'}, grid{make_grid(layout)},
-    playerNextAction{std::make_pair('m', Direction::X)}, player{nullptr}, /*enemies{},*/ items{} {}
+Chamber::Chamber(const std::string& layout) : floorNumber{1}, race{'h'}, grid{make_grid(layout)},
+    playerNextAction{std::make_pair('m', Direction::X)}, player{nullptr} {}
 
 void Chamber::set_player_action(char action, Direction dir) /*noexcept*/ {
     auto& [ oldaction, olddir ] = playerNextAction;
@@ -119,10 +113,11 @@ void Chamber::spawn_all() {
     }
 
     // 2. spawn player in one of them
-    std::shuffle(chambers.begin(), chambers.end(), ChamberSettings::rng);
+    std::shuffle(chambers.begin(), chambers.end(), ChamberSettings::get_generator());
 
-    for (auto& chamber : chambers)
-        std::shuffle(chamber.begin(), chamber.end(), ChamberSettings::rng);
+    for (auto& chamber : chambers) {
+        std::shuffle(chamber.begin(), chamber.end(), ChamberSettings::get_generator());
+    }
 
     player = Player::make_player(race, std::move(chambers[0].back()));
     chambers[0].pop_back();
