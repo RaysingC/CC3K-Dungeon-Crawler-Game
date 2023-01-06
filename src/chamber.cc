@@ -80,7 +80,7 @@ void Chamber::set_player_action(char action, Direction dir) /*noexcept*/ {
     olddir = dir;
 }
 
-const PlayerStats& Chamber::player_stats() const {
+std::tuple<int, int, int, char, int> Chamber::player_stats() const {
     return player->get_stats();
 }
 
@@ -127,7 +127,7 @@ void Chamber::spawn_all() {
 
 void Chamber::next_turn() /*noexcept*/ {
     auto [ action, dir ] = playerNextAction;
-    const auto& [ playerx, playery ] = player->get_stats().get_pos();
+    const auto& [ playerx, playery ] = player->get_pos();
     Cell& currentCell = grid[playery * ChamberSettings::width() + playerx];
     Cell& targetCell = cell_in_dir(playerx, playery, dir);
 
@@ -160,7 +160,7 @@ void Chamber::print() const noexcept {
         display[i] = grid[i].get_type();
     }
 
-    const auto& [ playerx, playery ] = player->get_stats().get_pos();
+    const auto& [ playerx, playery ] = player->get_pos();
     display[playery * ChamberSettings::width() + playerx] = '@';
 
     // do the same for enemies

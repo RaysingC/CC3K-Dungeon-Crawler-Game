@@ -22,28 +22,24 @@ class DwarfPlayer : public Player {
 public:
     DwarfPlayer(std::pair<int, int>&& pos)
         : Player(100, 20, 30, 'd', std::move(pos)) {}
-    /*
-    void pickup_gold(int amount) override {
-        stats->change_gold(amount * 2);
+    void change_gold(int amount) override {
+        amount >= 0 ? gold += amount * 2 : gold += amount;
     }
-    */
 };
 
 class OrcPlayer : public Player {
 public:
     OrcPlayer(std::pair<int, int>&& pos)
         : Player(180, 30, 25, 'o', std::move(pos)) {}
-    /*
-    void pickup_gold(int amount) override {
-        stats->change_gold((amount + 1) / 2);
+    void change_gold(int amount) override {
+        amount >= 0 ? gold += (amount + 1) / 2 : gold += amount; // round up
     }
-    */
 };
 
 // inlines only work in the header file
 
 Player::Player(int maxhp, int atk, int def, char race, std::pair<int, int>&& pos)
-    : stats{std::make_unique<PlayerStats>(maxhp, atk, def, std::move(pos), race)} {}
+    : stats{maxhp, atk, def, std::move(pos)}, race{race}, gold{0} {}
 
 // race is checked to be valid by game.cc
 std::unique_ptr<Player> Player::make_player(char race, std::pair<int, int>&& pos) noexcept {
@@ -59,4 +55,9 @@ std::unique_ptr<Player> Player::make_player(char race, std::pair<int, int>&& pos
         std::cerr << "Invalid race chosen, defaulting to Human\n";
         return std::make_unique<HumanPlayer>(std::move(pos));
     }
+}
+
+std::tuple<int, int, int, char, int> Player::get_stats() const noexcept {
+    auto [ hp, atk, def] = stats.get_tuple();
+    return std::make_tuple(hp, atk, def, race, gold);
 }
