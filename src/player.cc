@@ -61,3 +61,20 @@ std::tuple<int, int, int, char, int> Player::get_stats() const noexcept {
     auto [ hp, atk, def] = stats.get_tuple();
     return std::make_tuple(hp, atk, def, race, gold);
 }
+
+std::tuple<int, int, int, char, int> TempPotionedPlayer::get_stats() const noexcept {
+    auto [ hp, atk, def] = stats.get_tuple();
+    return std::make_tuple(hp, atk + atkChange, def + defChange, race, gold);
+}
+
+void Player::tank(int enemyAttack) noexcept {
+    auto [ hp, atk, def] = stats.get_tuple();
+    int totalDamage = ceil(100.0 / (100.0 + static_cast<double>(def) * static_cast<double>(atk)));
+    stats.change_hp(totalDamage);
+}
+
+void BarrierSuitPlayer::tank(int enemyAttack) noexcept {
+    auto [ hp, atk, def] = stats.get_tuple();
+    int totalDamage = ceil(100.0 / (100.0 + static_cast<double>(def) * static_cast<double>(atk)));
+    stats.change_hp((totalDamage + 1) / 2);
+}

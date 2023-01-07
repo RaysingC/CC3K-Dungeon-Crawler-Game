@@ -72,7 +72,7 @@ CellArray make_grid(const std::string& layout) {
 }
 
 Chamber::Chamber(const std::string& layout) : floorNumber{1}, race{'h'}, grid{make_grid(layout)},
-    playerNextAction{std::make_pair('m', Direction::X)}, player{nullptr} {}
+    playerNextAction{std::make_pair('m', Direction::X)}, player{nullptr}, items{}, citems{} {}
 
 void Chamber::set_player_action(char action, Direction dir) /*noexcept*/ {
     auto& [ oldaction, olddir ] = playerNextAction;
@@ -98,6 +98,10 @@ static void addCellsToChamber(CellArray& tempgrid, vecOfCoords& chamber, int x, 
 }
 
 void Chamber::spawn_all() {
+    items.clear();
+    citems.clear();
+    // enemies.clear();
+
     // 1. number chambers
     std::vector<vecOfCoords> chambers;
     CellArray tempgrid = grid; // making a tempgrid is slow and heavy
@@ -122,7 +126,50 @@ void Chamber::spawn_all() {
     player = Player::make_player(race, std::move(chambers[0].back()));
     chambers[0].pop_back();
 
+    // 3. spawn stairs
+    int numChambers = chambers.size();
+    if (numChambers < 2) {
+        std::cerr << "Error: Layout must have at least two chambers\n";
+        throw "notEnoughChambers";
+    }
+    std::unique_ptr<ContactItem> stairs
+        = ContactItem::make_contact_item('s', std::move(chambers[1].back()), false);
+    citems.insert({chambers[1].back(), std::move(stairs)});
+    chambers[1].pop_back();
 
+    std::default_random_engine& rng{ChamberSettings::get_generator()};
+    // 4. spawn potions and gold
+    for (int i = 0; i < 10; ++i) {
+        if (numChambers == 0) break;
+        int targetChamber = rng() % numChambers;
+        items.insert(
+            { chambers[targetChamber].back(),
+                Item::make_item('p', std::move(chambers[targetChamber].back())) }
+        );
+
+        chambers[targetChamber].pop_back();
+        if (chambers[targetChamber].empty()) {
+            std::swap(chambers[targetChamber], chambers.back());
+            chambers.pop_back();
+            --numChambers;
+        }
+    }
+
+    for (int i = 0; i < 10; ++i) {
+        if (numChambers == 0) break;
+        int targetChamber = rng() % numChambers;
+        citems.insert(
+            { chambers[targetChamber].back(),
+                ContactItem::make_contact_item('g', std::move(chambers[targetChamber].back()), false) }
+        );
+
+        chambers[targetChamber].pop_back();
+        if (chambers[targetChamber].empty()) {
+            std::swap(chambers[targetChamber], chambers.back());
+            chambers.pop_back();
+            --numChambers;
+        }
+    }
 }
 
 void Chamber::next_turn() /*noexcept*/ {
@@ -138,7 +185,13 @@ void Chamber::next_turn() /*noexcept*/ {
         }
         player->move(dir);
         targetCell.occupy();
+        
         // use ContactItems
+        auto it = citems.find(player->get_pos());
+        if (it != citems.end()) {
+            std::get<1>(*it)->trigger(player);
+            citems.erase(player->get_pos());
+        }
     } else if (action == 'u') {
         if (targetCell.is_occupied() /* &&
             search the unordered_map holding the items*/) {
@@ -160,10 +213,20 @@ void Chamber::print() const noexcept {
         display[i] = grid[i].get_type();
     }
 
+    for (const auto& [ pos, citemptr ] : citems) {
+        const auto& [ x, y ] = pos;
+        display[y * ChamberSettings::width() + x] = citemptr->get_icon();
+    }
+
+    for (const auto& [ pos, itemptr ] : items) {
+        const auto& [ x, y ] = pos;
+        display[y * ChamberSettings::width() + x] = itemptr->get_icon();
+    }
+
+    // generate enemies
+
     const auto& [ playerx, playery ] = player->get_pos();
     display[playery * ChamberSettings::width() + playerx] = '@';
-
-    // do the same for enemies
 
     for (int y = 0; y < ChamberSettings::height(); ++y) {
         for (int x = 0; x < ChamberSettings::width(); ++x)

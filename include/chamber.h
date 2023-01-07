@@ -23,9 +23,11 @@ class Chamber {
     CellArray grid;
     std::pair<char, Direction> playerNextAction; // consider using a scoped enum for actions instead of a char
     std::unique_ptr<Player> player;
+    
+    // why does std::map not take const & keys???
+    std::map<const std::pair<int, int>, std::unique_ptr<Item>> items; // consider removing pos field from items???
+    std::map<const std::pair<int, int>, std::unique_ptr<ContactItem>> citems;
     // std::map<std::pair<int, int>, std::unique_ptr<Enemy>> enemies;
-    std::map<std::pair<int, int>, std::unique_ptr<ContactItem>> citems;
-    std::map<std::pair<int, int>, std::unique_ptr<Item>> items;
 
     Cell& cell_in_dir(int, int, Direction) noexcept; // invalid or out of bounds returns the current cell
 
