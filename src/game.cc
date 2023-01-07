@@ -47,7 +47,7 @@ static std::string action_message(char action, Direction dir) {
 
 void Game::print(const std::string& actionMessage) const noexcept {
     chamber.print();
-    const auto& [ hp, atk, def, race, gold ] = chamber.player_stats();
+    const auto [ hp, atk, def, race, gold ] = chamber.player_stats();
     std::cout << "Race: " << Race::full_name(race)
         << " Gold: " << gold << '\n'
         << "HP: " << hp << '\n'
@@ -91,13 +91,16 @@ void Game::play() {
         chamber.set_player_action(action, dir);
         chamber.next_turn();
         print(action_message(action, dir));
+
+        const auto [ hp, atk, def, race, gold ] = chamber.player_stats();
+        if (hp == 0) break;
     }
 
     end_game_message();
 }
 
 void Game::end_game_message() const {
-    const auto& [ hp, atk, def, race, gold ] = chamber.player_stats();
+    const auto [ hp, atk, def, race, gold ] = chamber.player_stats();
     std::cout << "YOU " << (hp != 0 && chamber.get_floor() == 6 ? "BEAT THE GAME" : "DIED") << " WITH A SCORE OF "
         << (race == 'h' ? gold + (gold / 2) : gold) << '\n';
 }

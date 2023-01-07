@@ -17,8 +17,8 @@ namespace DirUtils {
     // bool valid_dir(const std::string&);
 
     bool valid_dir_input(const std::string&) noexcept;
-
     std::string dir_to_str(Direction) noexcept;
+    std::pair<int, int> new_coords(const std::pair<int, int>&, Direction) noexcept; // this is only used with the 'u' command
 }
 
 #endif

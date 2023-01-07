@@ -18,7 +18,9 @@ public:
     std::tuple<int, int, int> get_tuple() const noexcept {
         return std::make_tuple(hp, atk, def);
     }
-    void move(Direction) noexcept;
+    void move(Direction dir) noexcept {
+        pos = DirUtils::new_coords(pos, dir);
+    }
 
     // see player.h
     void change_hp(int change) noexcept { hp + change > 0 ? hp += change : hp = 0; }

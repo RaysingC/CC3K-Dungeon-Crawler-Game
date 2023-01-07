@@ -16,7 +16,7 @@ protected:
 public:
     virtual ~Item() = default;
     static std::unique_ptr<Item> make_item(char, std::pair<int, int>&&) noexcept;
-    virtual void use(const std::unique_ptr<Player>&) = 0;
+    virtual void use(std::unique_ptr<Player>&) = 0;
     char get_icon() const noexcept { return icon; }
 };
 
@@ -30,8 +30,9 @@ protected:
 
 public:
     virtual ~ContactItem() = default;
-    static std::unique_ptr<ContactItem> make_contact_item(char, std::pair<int, int>&&, bool) noexcept;
-    virtual void trigger(const std::unique_ptr<Player>&) = 0;
+    static std::unique_ptr<ContactItem> make_contact_item(char, std::pair<int, int>&&, bool);
+    static std::unique_ptr<ContactItem> make_goldpile(int, std::pair<int, int>&&);
+    virtual void trigger(std::unique_ptr<Player>&) = 0;
     char get_icon() const noexcept { return icon; }
 };
 

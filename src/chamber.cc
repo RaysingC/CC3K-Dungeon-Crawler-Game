@@ -8,51 +8,8 @@
 
 // bounds checking is applied here so players don't cause a segfault when moving at the edges
 Cell& Chamber::cell_in_dir(int x, int y, Direction dir) noexcept {
-    bool onLeftEdge = x == 0,
-        onRightEdge = x == ChamberSettings::width() - 1,
-        onTopEdge = y == 0,
-        onBottomEdge = y == ChamberSettings::height() - 1;
-    switch(dir) {
-        case Direction::NW:
-            if (!onTopEdge && !onLeftEdge) {
-                --x; --y;
-            }
-            break;
-        case Direction::N:
-            if (!onTopEdge)
-                --y;
-            break;
-        case Direction::NE:
-            if (!onTopEdge && !onRightEdge) {
-                ++x; --y;
-            }
-            break;
-        case Direction::W:
-            if (!onLeftEdge)
-                --x;
-            break;
-        case Direction::E:
-            if (!onRightEdge)
-                ++x;
-            break;
-        case Direction::SW:
-            if (!onBottomEdge && !onLeftEdge) {
-                --x; ++y;
-            }
-            break;
-        case Direction::S:
-            if (!onBottomEdge)
-                ++y;
-            break;
-        case Direction::SE:
-            if (!onBottomEdge && !onRightEdge) {
-                ++x; ++y;
-            }
-            break;
-        default:
-            break;
-    }
-    return grid[y * ChamberSettings::width() + x];
+    auto [ newx, newy ] = DirUtils::new_coords(std::make_pair(x, y), dir);
+    return grid[newy * ChamberSettings::width() + newx];
 }
 
 using CellArray = std::array<Cell, ChamberSettings::width() * ChamberSettings::height()>;
@@ -137,11 +94,14 @@ void Chamber::spawn_all() {
     citems.insert({chambers[1].back(), std::move(stairs)});
     chambers[1].pop_back();
 
-    std::default_random_engine& rng{ChamberSettings::get_generator()};
     // 4. spawn potions and gold
+    std::default_random_engine& rng{ChamberSettings::get_generator()};
     for (int i = 0; i < 10; ++i) {
         if (numChambers == 0) break;
         int targetChamber = rng() % numChambers;
+        const auto [ x, y ] = chambers[targetChamber].back();
+        grid[y * ChamberSettings::width() + x].occupy();
+
         items.insert(
             { chambers[targetChamber].back(),
                 Item::make_item('p', std::move(chambers[targetChamber].back())) }
@@ -158,6 +118,7 @@ void Chamber::spawn_all() {
     for (int i = 0; i < 10; ++i) {
         if (numChambers == 0) break;
         int targetChamber = rng() % numChambers;
+
         citems.insert(
             { chambers[targetChamber].back(),
                 ContactItem::make_contact_item('g', std::move(chambers[targetChamber].back()), false) }
@@ -174,7 +135,7 @@ void Chamber::spawn_all() {
 
 void Chamber::next_turn() /*noexcept*/ {
     auto [ action, dir ] = playerNextAction;
-    const auto& [ playerx, playery ] = player->get_pos();
+    const auto [ playerx, playery ] = player->get_pos();
     Cell& currentCell = grid[playery * ChamberSettings::width() + playerx];
     Cell& targetCell = cell_in_dir(playerx, playery, dir);
 
@@ -193,15 +154,16 @@ void Chamber::next_turn() /*noexcept*/ {
             citems.erase(player->get_pos());
         }
     } else if (action == 'u') {
-        if (targetCell.is_occupied() /* &&
-            search the unordered_map holding the items*/) {
-
+        if (!targetCell.is_occupied()) return;
+        std::pair<int, int> targetCoords = DirUtils::new_coords(player->get_pos(), dir);
+        auto it = items.find(targetCoords);
+        if (it != items.end()) {
+            std::get<1>(*it)->use(player);
+            items.erase(targetCoords);
+            targetCell.unoccupy();
         }
     } else if (action == 'a') {
-        if (targetCell.is_occupied() /* &&
-            search the unordered_map holding the enemies*/) {
-
-        }
+        if (!targetCell.is_occupied()) return;
     }
     // call passives on player and enemies, check descend logic?
 }
@@ -214,23 +176,29 @@ void Chamber::print() const noexcept {
     }
 
     for (const auto& [ pos, citemptr ] : citems) {
-        const auto& [ x, y ] = pos;
+        const auto [ x, y ] = pos;
         display[y * ChamberSettings::width() + x] = citemptr->get_icon();
     }
 
     for (const auto& [ pos, itemptr ] : items) {
-        const auto& [ x, y ] = pos;
+        const auto [ x, y ] = pos;
         display[y * ChamberSettings::width() + x] = itemptr->get_icon();
     }
 
     // generate enemies
 
-    const auto& [ playerx, playery ] = player->get_pos();
+    const auto [ playerx, playery ] = player->get_pos();
     display[playery * ChamberSettings::width() + playerx] = '@';
 
     for (int y = 0; y < ChamberSettings::height(); ++y) {
-        for (int x = 0; x < ChamberSettings::width(); ++x)
-            std::cout << display[y * ChamberSettings::width() + x];
+        for (int x = 0; x < ChamberSettings::width(); ++x) {
+            char cell = display[y * ChamberSettings::width() + x];
+            if (cell == '@') {
+                std::cout << "\e[1;36m@\e[1;0m"; // figure out a general way to enable colors on icons
+            } else {
+                std::cout << cell;
+            }
+        }
         std::cout << '\n';
     }
 }

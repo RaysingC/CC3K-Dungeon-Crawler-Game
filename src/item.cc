@@ -14,18 +14,19 @@ protected:
 
 public:
     static std::unique_ptr<Potion> make_potion(std::pair<int, int>&&);
-    void use(const std::unique_ptr<Player>&) override;
+    void use(std::unique_ptr<Player>&) override;
     std::tuple<int, int, int> get_effects() {
         return std::make_tuple(hpChange, atkChange, defChange);
     }
 };
 
+// should this be polymorphic to Potion?
 class TempPotion : public Potion {
 public:
     // I will allow this because we're inside a .cc file and
     // other classes can't see this class and call the constructor
     using Potion::Potion;
-    void use(const std::unique_ptr<Player>&) override;
+    void use(std::unique_ptr<Player>&) override;
 };
 
 std::unique_ptr<Potion> Potion::make_potion(std::pair<int, int>&& pos) {
@@ -33,15 +34,16 @@ std::unique_ptr<Potion> Potion::make_potion(std::pair<int, int>&& pos) {
     PotionType pt = static_cast<PotionType>(rng() % PotionType::numUniquePotions);
     // I have to initialize unique_ptrs like this because all the constructors are inaccessible
     // the forwarding function make_unique can't access their constructors
+    /*
     switch (pt) {
         case RH:
-            return std::unique_ptr<Potion>(new Potion{std::move(pos), static_cast<int>(rng() % 11), 0, 0});
+            return std::unique_ptr<Potion>(new Potion{std::move(pos), static_cast<int>(rng() % 10) + 1, 0, 0});
         case BA:
             return std::unique_ptr<TempPotion>(new TempPotion{std::move(pos), 0, 5, 0});
         case BD:
             return std::unique_ptr<TempPotion>(new TempPotion{std::move(pos), 0, 0, 5});
         case PH:
-            return std::unique_ptr<Potion>(new Potion{std::move(pos), static_cast<int>(-(rng() % 11)), 0, 0});
+            return std::unique_ptr<Potion>(new Potion{std::move(pos), static_cast<int>(-(rng() % 10)) + 1, 0, 0});
         case WA:
             return std::unique_ptr<TempPotion>(new TempPotion{std::move(pos), 0, -5, 0});
         case WD:
@@ -49,19 +51,21 @@ std::unique_ptr<Potion> Potion::make_potion(std::pair<int, int>&& pos) {
         default:
             break;
     }
+    */
+            return std::unique_ptr<TempPotion>(new TempPotion{std::move(pos), 0, 5, 0});
     std::cerr << "Error: Making a potion that doesn't exist\n";
     return nullptr;
 }
 
-void Potion::use(const std::unique_ptr<Player>& playerptr) {
+void Potion::use(std::unique_ptr<Player>& playerptr) {
     playerptr->change_hp(hpChange);
     playerptr->change_atk(atkChange);
     playerptr->change_def(defChange);
 }
 
-void TempPotion::use(const std::unique_ptr<Player>& playerptr) {
+void TempPotion::use(std::unique_ptr<Player>& playerptr) {
     playerptr->change_hp(hpChange);
-    *playerptr = TempPotionedPlayer{playerptr, atkChange, defChange};
+    playerptr = std::unique_ptr<Player>(new TempPotionedPlayer{std::move(playerptr), atkChange, defChange});
 }
 
 std::unique_ptr<Item> Item::make_item(char item, std::pair<int, int>&& pos) noexcept {
@@ -75,11 +79,13 @@ std::unique_ptr<Item> Item::make_item(char item, std::pair<int, int>&& pos) noex
 class GoldPile : public ContactItem {
     int value;
     GoldPile(std::pair<int, int>&& pos, int value) : ContactItem(std::move(pos), 'G'), value{value} {}
+    friend std::unique_ptr<ContactItem>
+        ContactItem::make_goldpile(int, std::pair<int, int>&&); // really?
 
 public:
     static std::unique_ptr<ContactItem> make_goldpile(std::pair<int, int>&&, bool);
-    void trigger(const std::unique_ptr<Player>& playerptr) override {
-        // race logic is handled by inherited classes see player.cc
+    void trigger(std::unique_ptr<Player>& playerptr) override {
+        // logic based on race is handled by polymorphism see player.cc
         playerptr->change_gold(value);
     }
 };
@@ -88,7 +94,7 @@ class Stairs : public ContactItem {
     Stairs(std::pair<int, int>&& pos) : ContactItem(std::move(pos), '\\') {}
 
 public:
-    void trigger(const std::unique_ptr<Player>& playerptr) override {
+    void trigger(std::unique_ptr<Player>& playerptr) override {
         *playerptr = playerptr->remove_effects();
     }
     friend class ContactItem;
@@ -98,8 +104,8 @@ class BarrierSuit : public ContactItem {
     BarrierSuit(std::pair<int, int>&& pos) : ContactItem(std::move(pos), 'B') {}
 
 public:
-    void trigger(const std::unique_ptr<Player>& playerptr) override {
-        *playerptr = BarrierSuitPlayer{playerptr};
+    void trigger(std::unique_ptr<Player>& playerptr) override {
+        playerptr = std::unique_ptr<Player>(new BarrierSuitPlayer{std::move(playerptr)});
     }
     friend class GoldPile;
 };
@@ -119,7 +125,7 @@ std::unique_ptr<ContactItem> GoldPile::make_goldpile(std::pair<int, int>&& pos, 
 }
 
 std::unique_ptr<ContactItem>
-ContactItem::make_contact_item(char item, std::pair<int, int>&& pos, bool makeBarrierSuits = false) noexcept {
+ContactItem::make_contact_item(char item, std::pair<int, int>&& pos, bool makeBarrierSuits = false) {
     if (item == 'g') {
         return GoldPile::make_goldpile(std::move(pos), makeBarrierSuits);
     } else if (item == 's') {
@@ -127,4 +133,9 @@ ContactItem::make_contact_item(char item, std::pair<int, int>&& pos, bool makeBa
     } else {
         return nullptr;
     }
+}
+
+std::unique_ptr<ContactItem>
+ContactItem::make_goldpile(int value, std::pair<int, int>&& pos) {
+    return std::unique_ptr<GoldPile>(new GoldPile{std::move(pos), value});
 }

@@ -4,7 +4,6 @@
 #include <memory>
 #include "direction.h"
 #include "stats.h"
-#include <cmath>
 
 class Player {
 protected:
@@ -29,7 +28,7 @@ public:
     void change_hp(int change) noexcept { stats.change_hp(change); }
     void change_atk(int change) noexcept { stats.change_atk(change); }
     void change_def(int change) noexcept { stats.change_def(change); }
-    const std::pair<int, int>& get_pos() noexcept { return stats.get_pos(); }
+    const std::pair<int, int>& get_pos() const noexcept { return stats.get_pos(); }
 
     // Potion logic
     virtual Player& remove_effects() noexcept { return *this; };

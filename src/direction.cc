@@ -68,4 +68,53 @@ namespace DirUtils {
                 return "INVALID";
         }
     }
+
+    std::pair<int, int> new_coords(const std::pair<int, int>& coords, Direction dir) noexcept {
+        auto [ x, y ] = coords;
+        bool onLeftEdge = x == 0,
+            onRightEdge = x == ChamberSettings::width() - 1,
+            onTopEdge = y == 0,
+            onBottomEdge = y == ChamberSettings::height() - 1;
+        switch(dir) {
+            case Direction::NW:
+                if (!onTopEdge && !onLeftEdge) {
+                    --x; --y;
+                }
+                break;
+            case Direction::N:
+                if (!onTopEdge)
+                    --y;
+                break;
+            case Direction::NE:
+                if (!onTopEdge && !onRightEdge) {
+                    ++x; --y;
+                }
+                break;
+            case Direction::W:
+                if (!onLeftEdge)
+                    --x;
+                break;
+            case Direction::E:
+                if (!onRightEdge)
+                    ++x;
+                break;
+            case Direction::SW:
+                if (!onBottomEdge && !onLeftEdge) {
+                    --x; ++y;
+                }
+                break;
+            case Direction::S:
+                if (!onBottomEdge)
+                    ++y;
+                break;
+            case Direction::SE:
+                if (!onBottomEdge && !onRightEdge) {
+                    ++x; ++y;
+                }
+                break;
+            default:
+                break;
+        }
+        return std::make_pair(x, y);
+    }
 }

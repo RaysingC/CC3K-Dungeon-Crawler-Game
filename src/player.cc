@@ -1,6 +1,7 @@
 #include "player.h"
 #include "stats.h"
 #include <iostream>
+#include <cmath>
 
 Player::~Player() {}
 
@@ -63,7 +64,7 @@ std::tuple<int, int, int, char, int> Player::get_stats() const noexcept {
 }
 
 std::tuple<int, int, int, char, int> TempPotionedPlayer::get_stats() const noexcept {
-    auto [ hp, atk, def] = stats.get_tuple();
+    auto [ hp, atk, def, race, gold ] = playerptr->get_stats();
     return std::make_tuple(hp, atk + atkChange, def + defChange, race, gold);
 }
 
