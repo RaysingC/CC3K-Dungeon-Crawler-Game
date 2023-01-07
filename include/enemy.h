@@ -17,7 +17,7 @@ protected:
 public:
     virtual ~Enemy() = 0;
     static std::unique_ptr<Enemy> make_enemy(char, std::pair<int, int>&&);
-    const std::pair<int, int>& get_pos() const noexcept { return stats.get_pos(); }
+    std::pair<int, int> get_pos() const noexcept { return stats.get_pos(); }
     char get_type() const noexcept { return type; }
 
     // called per turn

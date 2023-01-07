@@ -14,7 +14,7 @@ protected:
 
 public:
     static std::unique_ptr<Potion> make_potion(std::pair<int, int>&&);
-    void use(std::unique_ptr<Player>&) override;
+    void use(std::shared_ptr<Player>&) override;
     std::tuple<int, int, int> get_effects() {
         return std::make_tuple(hpChange, atkChange, defChange);
     }
@@ -26,7 +26,7 @@ public:
     // I will allow this because we're inside a .cc file and
     // other classes can't see this class and call the constructor
     using Potion::Potion;
-    void use(std::unique_ptr<Player>&) override;
+    void use(std::shared_ptr<Player>&) override;
 };
 
 std::unique_ptr<Potion> Potion::make_potion(std::pair<int, int>&& pos) {
@@ -57,15 +57,29 @@ std::unique_ptr<Potion> Potion::make_potion(std::pair<int, int>&& pos) {
     return nullptr;
 }
 
-void Potion::use(std::unique_ptr<Player>& playerptr) {
+void Potion::use(std::shared_ptr<Player>& playerptr) {
+    const auto [ hp, atk, def, race, gold ] = playerptr->get_stats();
+    if (race == 'e') {
+        hpChange = abs(hpChange);
+        atkChange = abs(atkChange);
+        defChange = abs(defChange);
+    }
     playerptr->change_hp(hpChange);
     playerptr->change_atk(atkChange);
     playerptr->change_def(defChange);
 }
 
-void TempPotion::use(std::unique_ptr<Player>& playerptr) {
+void TempPotion::use(std::shared_ptr<Player>& playerptr) {
+    const auto [ hp, atk, def, race, gold ] = playerptr->get_stats();
+    if (race == 'e') {
+        hpChange = abs(hpChange);
+        atkChange = abs(atkChange);
+        defChange = abs(defChange);
+    }
     playerptr->change_hp(hpChange);
-    playerptr = std::unique_ptr<Player>(new TempPotionedPlayer{std::move(playerptr), atkChange, defChange});
+    // I can't reassign *playerptr by value because playerptr was initialized with a Player*
+    // so it's still using the Player vptr! I have to overwrite playerptr to use a different vptr
+    playerptr = std::shared_ptr<Player>(new TempPotionedPlayer{playerptr, atkChange, defChange});
 }
 
 std::unique_ptr<Item> Item::make_item(char item, std::pair<int, int>&& pos) noexcept {
@@ -84,7 +98,7 @@ class GoldPile : public ContactItem {
 
 public:
     static std::unique_ptr<ContactItem> make_goldpile(std::pair<int, int>&&, bool);
-    void trigger(std::unique_ptr<Player>& playerptr) override {
+    void trigger(std::shared_ptr<Player>& playerptr) override {
         // logic based on race is handled by polymorphism see player.cc
         playerptr->change_gold(value);
     }
@@ -94,8 +108,8 @@ class Stairs : public ContactItem {
     Stairs(std::pair<int, int>&& pos) : ContactItem(std::move(pos), '\\') {}
 
 public:
-    void trigger(std::unique_ptr<Player>& playerptr) override {
-        *playerptr = playerptr->remove_effects();
+    void trigger(std::shared_ptr<Player>& playerptr) override {
+        playerptr = playerptr->remove_effects();
     }
     friend class ContactItem;
 };
@@ -104,8 +118,8 @@ class BarrierSuit : public ContactItem {
     BarrierSuit(std::pair<int, int>&& pos) : ContactItem(std::move(pos), 'B') {}
 
 public:
-    void trigger(std::unique_ptr<Player>& playerptr) override {
-        playerptr = std::unique_ptr<Player>(new BarrierSuitPlayer{std::move(playerptr)});
+    void trigger(std::shared_ptr<Player>& playerptr) override {
+        playerptr = std::shared_ptr<Player>(new BarrierSuitPlayer{playerptr});
     }
     friend class GoldPile;
 };

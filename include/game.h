@@ -10,7 +10,7 @@ class Game {
 
     void prompt_race();
     void print(const std::string&) const noexcept;
-    void end_game_message() const;
+    void end_game_message() const noexcept;
 
 public:
     Game(const std::string& layoutFile);

@@ -22,7 +22,7 @@ class Chamber {
     char race;
     CellArray grid;
     std::pair<char, Direction> playerNextAction; // consider using a scoped enum for actions instead of a char
-    std::unique_ptr<Player> player;
+    std::shared_ptr<Player> player;
     
     // why does std::map not take const & keys???
     std::map<const std::pair<int, int>, std::unique_ptr<Item>> items; // consider removing pos field from items???

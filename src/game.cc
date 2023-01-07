@@ -99,7 +99,7 @@ void Game::play() {
     end_game_message();
 }
 
-void Game::end_game_message() const {
+void Game::end_game_message() const noexcept {
     const auto [ hp, atk, def, race, gold ] = chamber.player_stats();
     std::cout << "YOU " << (hp != 0 && chamber.get_floor() == 6 ? "BEAT THE GAME" : "DIED") << " WITH A SCORE OF "
         << (race == 'h' ? gold + (gold / 2) : gold) << '\n';

@@ -14,7 +14,7 @@ protected:
 public:
     Stats(int maxhp, int atk, int def, std::pair<int, int>&& pos)
         : maxhp{maxhp}, hp{maxhp}, atk{atk}, def{def}, pos{std::move(pos)} {}
-    const std::pair<int, int>& get_pos() const noexcept { return pos; }
+    std::pair<int, int> get_pos() const noexcept { return pos; }
     std::tuple<int, int, int> get_tuple() const noexcept {
         return std::make_tuple(hp, atk, def);
     }
