@@ -7,7 +7,7 @@
 #include <map>
 #include "cell.h"
 #include "player.h"
-// #include "enemy.h"
+#include "enemy.h"
 #include "item.h"
 #include "chambersettings.h"
 
@@ -17,8 +17,6 @@ enum class Direction;
 
 class Chamber {
     using CellArray = std::array<Cell, ChamberSettings::width() * ChamberSettings::height()>;
-
-    int floorNumber;
     char race;
     CellArray grid;
     std::pair<char, Direction> playerNextAction; // consider using a scoped enum for actions instead of a char
@@ -27,7 +25,7 @@ class Chamber {
     // why does std::map not take const & keys???
     std::map<const std::pair<int, int>, std::unique_ptr<Item>> items; // consider removing pos field from items???
     std::map<const std::pair<int, int>, std::unique_ptr<ContactItem>> citems;
-    // std::map<std::pair<int, int>, std::unique_ptr<Enemy>> enemies;
+    std::map<const std::pair<int, int>, std::unique_ptr<Enemy>> enemies;
 
     Cell& cell_in_dir(int, int, Direction) noexcept; // invalid or out of bounds returns the current cell
 
@@ -40,7 +38,6 @@ public:
     void spawn_all();
     void next_turn();
     void print() const noexcept; // should this have noexcept?
-    int get_floor() const noexcept { return floorNumber; }
 };
 
 #endif

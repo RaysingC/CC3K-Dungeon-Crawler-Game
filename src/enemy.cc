@@ -3,9 +3,9 @@
 #include "direction.h"
 #include "player.h"
 
-Enemy::Enemy(int maxhp, int atk, int def, char type, std::pair<int, int>&& pos)
+Enemy::Enemy(int maxhp, int atk, int def, char type, std::pair<int, int>&& pos, bool hostile = true)
     : stats{maxhp, atk, def, std::move(pos)}, type{type}, playerInRangeLastTurn{false},
-    playerInRangeNow{false} {}
+    playerInRangeNow{false}, hostile{hostile} {}
 
 Enemy::~Enemy() {}
 
@@ -15,20 +15,22 @@ void Enemy::tank(int playerAttack) noexcept {
     stats.change_hp(totalDamage);
 }
 
-void Enemy::check_player_in_range(const std::unique_ptr<Player>& playerptr) noexcept {
+bool Enemy::player_in_range(const std::shared_ptr<Player>& playerptr) noexcept {
     playerInRangeLastTurn = playerInRangeNow;
     const auto [ myx, myy ] = get_pos();
     const auto [ playerx, playery ] = playerptr->get_pos();
     if (myx - playerx <= 1 && myx - playerx >= -1 &&
         myy - playery <= 1 && myy - playery >= -1) {
         playerInRangeNow = true;
+        return true;
     } else {
         playerInRangeNow = false;
+        return false;
     }
 }
 
-void Enemy::attempt_attack(const std::unique_ptr<Player>& playerptr) /*const*/ noexcept {
-    if (playerInRangeLastTurn && playerInRangeNow) {
+void Enemy::attempt_attack(const std::shared_ptr<Player>& playerptr) /*const*/ noexcept {
+    if (hostile && playerInRangeLastTurn && playerInRangeNow) {
         const auto [ hp, atk, def ] = stats.get_tuple();
         playerptr->tank(atk);
     }
@@ -59,24 +61,41 @@ void Troll::passive() noexcept {
 class Goblin : public Enemy {
 public:
     Goblin(std::pair<int, int>&& pos) : Enemy(70, 5, 10, 'N', std::move(pos)) {}
-    // add gold stealing method
+    void attempt_attack(const std::shared_ptr<Player>&) noexcept override;
 };
 
-class Merchant : public Enemy {
-public:
-    Merchant(std::pair<int, int>&& pos) : Enemy(30, 70, 5, 'M', std::move(pos)) {}
-    std::unique_ptr<ContactItem> drop_item() const override;
-};
+void Goblin::attempt_attack(const std::shared_ptr<Player>& playerptr) noexcept {
+    if (hostile && playerInRangeLastTurn && playerInRangeNow) {
+        const auto [ hp, atk, def ] = stats.get_tuple();
+        playerptr->tank(atk);
+        playerptr->change_gold(-1);
+    }
+}
 
 std::unique_ptr<ContactItem> Merchant::drop_item() const {
-    auto pos = get_pos();
-    return ContactItem::make_goldpile(4, std::move(pos));
+    return ContactItem::make_goldpile(4, get_pos());
+}
+
+void Merchant::tank(int playerAttack) noexcept {
+    Merchant::hostile = true;
+    Enemy::tank(playerAttack);
+}
+
+void Merchant::attempt_attack(const std::shared_ptr<Player>& playerptr) noexcept {
+    if (Merchant::hostile && playerInRangeLastTurn && playerInRangeNow) {
+        const auto [ hp, atk, def ] = stats.get_tuple();
+        playerptr->tank(atk);
+    }
 }
 
 class Dragon : public Enemy {
 public:
-    Dragon(std::pair<int, int>&& pos) : Enemy(150, 20, 20, 'D', std::move(pos)) {}
+    Dragon(std::pair<int, int>&& pos) : Enemy(150, 20, 20, 'D', std::move(pos), false) {}
     void move(Direction) noexcept override {}
+    void tank(int playerAttack) noexcept override {
+        hostile = true;
+        Enemy::tank(playerAttack);
+    }
 };
 
 class Phoenix : public Enemy {

@@ -60,13 +60,16 @@ void Game::play() {
     prompt_race();
     chamber.spawn_all();
     print("");
+    Merchant::pacify_merchants();
 
     std::string cmd;
     while (std::cin >> cmd) {
         if (cmd == "r") {
+            ChamberSettings::floor_number() = 1;
             prompt_race();
             chamber.spawn_all();
             print("");
+            Merchant::pacify_merchants();
             continue;
         } else if (cmd == "q") {
             break;
@@ -90,10 +93,22 @@ void Game::play() {
         }
         chamber.set_player_action(action, dir);
         chamber.next_turn();
-        print(action_message(action, dir));
 
         const auto [ hp, atk, def, race, gold ] = chamber.player_stats();
         if (hp == 0) break;
+        if (ChamberSettings::reset_next_turn()) {
+            chamber.spawn_all(); //.descend()
+
+            char floorNumber = static_cast<char>(ChamberSettings::floor_number() + '0');
+            std::string actionMessage = "The Player enters floor ";
+            actionMessage.push_back(floorNumber);
+            print(actionMessage);
+
+            ChamberSettings::reset_next_turn() = false;
+            continue;
+        }
+
+        print(action_message(action, dir));
     }
 
     end_game_message();
@@ -101,6 +116,6 @@ void Game::play() {
 
 void Game::end_game_message() const noexcept {
     const auto [ hp, atk, def, race, gold ] = chamber.player_stats();
-    std::cout << "YOU " << (hp != 0 && chamber.get_floor() == 6 ? "BEAT THE GAME" : "DIED") << " WITH A SCORE OF "
-        << (race == 'h' ? gold + (gold / 2) : gold) << '\n';
+    std::cout << "YOU " << (hp != 0 && ChamberSettings::floor_number() == 6 ? "BEAT THE GAME" : "DIED") << " WITH A SCORE OF "
+        << (race == 'h' ? gold + ((gold + 1) / 2) : gold) << '\n';
 }

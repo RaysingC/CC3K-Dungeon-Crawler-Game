@@ -5,6 +5,7 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include "enemy.h"
 
 // bounds checking is applied here so players don't cause a segfault when moving at the edges
 Cell& Chamber::cell_in_dir(int x, int y, Direction dir) noexcept {
@@ -28,7 +29,7 @@ CellArray make_grid(const std::string& layout) {
     return cellarray;
 }
 
-Chamber::Chamber(const std::string& layout) : floorNumber{1}, race{'h'}, grid{make_grid(layout)},
+Chamber::Chamber(const std::string& layout) : race{'h'}, grid{make_grid(layout)},
     playerNextAction{std::make_pair('m', Direction::X)}, player{nullptr}, items{}, citems{} {}
 
 void Chamber::set_player_action(char action, Direction dir) /*noexcept*/ {
@@ -57,7 +58,7 @@ static void addCellsToChamber(CellArray& tempgrid, vecOfCoords& chamber, int x, 
 void Chamber::spawn_all() {
     items.clear();
     citems.clear();
-    // enemies.clear();
+    enemies.clear();
 
     // 1. number chambers
     std::vector<vecOfCoords> chambers;
@@ -163,9 +164,33 @@ void Chamber::next_turn() /*noexcept*/ {
             targetCell.unoccupy();
         }
     } else if (action == 'a') {
-        if (!targetCell.is_occupied()) return;
+        std::pair<int, int> targetCoords = DirUtils::new_coords(player->get_pos(), dir);
+        auto it = enemies.find(targetCoords);
+        if (it != enemies.end()) {
+            auto& targetEnemyPtr = std::get<1>(*it);
+            auto [ hp, atk, def, race, gold ] = player->get_stats();
+            targetEnemyPtr->tank(atk);
+            if (!targetEnemyPtr->is_alive()) {
+                enemies.erase(targetCoords);
+                targetCell.unoccupy();
+            }
+        }
     }
+
     // call passives on player and enemies, check descend logic?
+    for (auto& [ pos, enemyptr ] : enemies) {
+        if (enemyptr->player_in_range(player) && enemyptr->is_hostile()) {
+            enemyptr->attempt_attack(player);
+        } else {
+            enemyptr->passive();
+            Direction dir = DirUtils::rand_dir();
+            auto [ x, y ] = pos;
+            if (cell_in_dir(x, y, dir).is_occupied()) {
+                dir = Direction::X;
+            }
+            enemyptr->move(dir);
+        }
+    }
 }
 
 void Chamber::print() const noexcept {

@@ -14,6 +14,10 @@ namespace ChamberSettings {
     inline constexpr int height() { return 25; }
     // int generate_random_int() noexcept;
     std::default_random_engine& get_generator() noexcept;
+
+    // descend logic
+    int& floor_number() noexcept; // this return type is not safe
+    bool& reset_next_turn() noexcept;
 }
 
 // note: defining functions directly in the header file will likely cause linking errors from multiple definitions

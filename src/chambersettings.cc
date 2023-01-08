@@ -15,4 +15,14 @@ namespace ChamberSettings {
         static std::default_random_engine generator{seed};
         return generator;
     }
+
+    int& floor_number() noexcept {
+        static int floorNumber{1};
+        return floorNumber;
+    }
+    
+    bool& reset_next_turn() noexcept {
+        static bool resetNextTurn{false};
+        return resetNextTurn;
+    }
 }

@@ -18,7 +18,6 @@ public:
     static std::shared_ptr<Player> make_player(char, std::pair<int, int>&&) noexcept;
     std::tuple<int, int, int, char, int> get_stats() const noexcept;
     virtual void change_gold(int amount) { gold + amount > 0 ? gold += amount : gold = 0; }
-    int get_gold() const noexcept { return gold; } // only used by decorators
 
     virtual void move(Direction dir) noexcept { stats.move(dir); }
 
@@ -49,19 +48,20 @@ protected:
     std::shared_ptr<Player> playerptr;
 
 public:
-    PlayerDecorator(std::shared_ptr<Player> playerptr) : Player(*playerptr), playerptr{playerptr} {}
+    PlayerDecorator(const std::shared_ptr<Player>& playerptr) : Player(*playerptr), playerptr{playerptr} {}
     std::shared_ptr<Player> remove_effects() noexcept override { return playerptr->remove_effects(); } // no const since I don't want to return a const &
     void move(Direction dir) noexcept override { stats.move(dir); playerptr->move(dir); }
     void tank(int) noexcept override;
     void change_gold(int amount) override {
         playerptr->change_gold(amount);
-        gold = playerptr->get_gold();
-    } // assuming races aren't changed during the game
+        const auto [ hp, atk, def, race, gold ] = playerptr->get_stats();
+        this->gold = gold;
+    }
 };
 
 class TempPotionedPlayer : public PlayerDecorator {
 public:
-    TempPotionedPlayer(std::shared_ptr<Player> playerptr, int atkChange, int defChange) : PlayerDecorator(playerptr) {
+    TempPotionedPlayer(const std::shared_ptr<Player>& playerptr, int atkChange, int defChange) : PlayerDecorator(playerptr) {
         change_atk(atkChange);
         change_def(defChange);
     }

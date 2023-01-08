@@ -110,6 +110,8 @@ class Stairs : public ContactItem {
 public:
     void trigger(std::shared_ptr<Player>& playerptr) override {
         playerptr = playerptr->remove_effects();
+        ++ChamberSettings::floor_number();
+        ChamberSettings::reset_next_turn() = true;
     }
     friend class ContactItem;
 };
