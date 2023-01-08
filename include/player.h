@@ -29,6 +29,7 @@ public:
     void change_atk(int change) noexcept { stats.change_atk(change); }
     void change_def(int change) noexcept { stats.change_def(change); }
     std::pair<int, int> get_pos() const noexcept { return stats.get_pos(); }
+    void set_pos(std::pair<int, int>&& pos) noexcept { stats.set_pos(std::move(pos)); } // this is so bad it's literally only used once in chamber.cc
 
     // Potion logic
     virtual std::shared_ptr<Player> remove_effects() noexcept = 0;

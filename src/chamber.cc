@@ -38,10 +38,6 @@ void Chamber::set_player_action(char action, Direction dir) /*noexcept*/ {
     olddir = dir;
 }
 
-std::tuple<int, int, int, char, int> Chamber::player_stats() const {
-    return player->get_stats();
-}
-
 using vecOfCoords = std::vector<std::pair<int, int>>;
 
 static void addCellsToChamber(CellArray& tempgrid, vecOfCoords& chamber, int x, int y) {
@@ -55,7 +51,7 @@ static void addCellsToChamber(CellArray& tempgrid, vecOfCoords& chamber, int x, 
     }
 }
 
-void Chamber::spawn_all() {
+void Chamber::spawn_all(std::shared_ptr<Player>&& playerptr) {
     items.clear();
     citems.clear();
     enemies.clear();
@@ -81,7 +77,12 @@ void Chamber::spawn_all() {
         std::shuffle(chamber.begin(), chamber.end(), ChamberSettings::get_generator());
     }
 
-    player = Player::make_player(race, std::move(chambers[0].back()));
+    if (playerptr) {
+        player = std::move(playerptr);
+        player->set_pos(std::move(chambers[0].back()));
+    } else {
+        player = Player::make_player(race, std::move(chambers[0].back()));
+    }
     chambers[0].pop_back();
 
     // 3. spawn stairs

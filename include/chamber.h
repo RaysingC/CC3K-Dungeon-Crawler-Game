@@ -33,9 +33,9 @@ public:
     Chamber(const std::string& layout); // constructs the map with no player
     void set_player_action(char, Direction); // do nothing if player == nullptr
     void set_race(char r) noexcept { race = r; }
-    std::tuple<int, int, int, char, int> player_stats() const;
+    const std::shared_ptr<Player>& get_playerptr() const noexcept { return player; }
 
-    void spawn_all();
+    void spawn_all(std::shared_ptr<Player>&& playerptr = nullptr);
     void next_turn();
     void print() const noexcept; // should this have noexcept?
 };

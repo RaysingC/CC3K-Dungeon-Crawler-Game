@@ -47,7 +47,7 @@ static std::string action_message(char action, Direction dir) {
 
 void Game::print(const std::string& actionMessage) const noexcept {
     chamber.print();
-    const auto [ hp, atk, def, race, gold ] = chamber.player_stats();
+    const auto [ hp, atk, def, race, gold ] = chamber.get_playerptr()->get_stats();
     std::cout << "Race: " << Race::full_name(race)
         << " Gold: " << gold << '\n'
         << "HP: " << hp << '\n'
@@ -94,10 +94,12 @@ void Game::play() {
         chamber.set_player_action(action, dir);
         chamber.next_turn();
 
-        const auto [ hp, atk, def, race, gold ] = chamber.player_stats();
-        if (hp == 0) break;
-        if (ChamberSettings::reset_next_turn()) {
-            chamber.spawn_all(); //.descend()
+        const auto [ hp, atk, def, race, gold ] = chamber.get_playerptr()->get_stats();
+        if (hp == 0 || ChamberSettings::floor_number() == 6) {
+            break;
+        } else if (ChamberSettings::reset_next_turn()) {
+            std::shared_ptr<Player> playerptr = chamber.get_playerptr();
+            chamber.spawn_all(std::move(playerptr));
 
             char floorNumber = static_cast<char>(ChamberSettings::floor_number() + '0');
             std::string actionMessage = "The Player enters floor ";
@@ -115,7 +117,7 @@ void Game::play() {
 }
 
 void Game::end_game_message() const noexcept {
-    const auto [ hp, atk, def, race, gold ] = chamber.player_stats();
+    const auto [ hp, atk, def, race, gold ] = chamber.get_playerptr()->get_stats();
     std::cout << "YOU " << (hp != 0 && ChamberSettings::floor_number() == 6 ? "BEAT THE GAME" : "DIED") << " WITH A SCORE OF "
         << (race == 'h' ? gold + ((gold + 1) / 2) : gold) << '\n';
 }

@@ -26,6 +26,7 @@ public:
     void change_hp(int change) noexcept { hp + change > 0 ? hp += change : hp = 0; }
     void change_atk(int change) noexcept { atk + change > 0 ? atk += change : atk = 0; }
     void change_def(int change) noexcept { def + change > 0 ? def += change : def = 0; }
+    void set_pos(std::pair<int, int>&& pos) noexcept { pos = std::move(pos); }
 };
 
 #endif

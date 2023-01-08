@@ -34,7 +34,6 @@ std::unique_ptr<Potion> Potion::make_potion(std::pair<int, int>&& pos) {
     PotionType pt = static_cast<PotionType>(rng() % PotionType::numUniquePotions);
     // I have to initialize unique_ptrs like this because all the constructors are inaccessible
     // the forwarding function make_unique can't access their constructors
-    /*
     switch (pt) {
         case RH:
             return std::unique_ptr<Potion>(new Potion{std::move(pos), static_cast<int>(rng() % 10) + 1, 0, 0});
@@ -51,8 +50,6 @@ std::unique_ptr<Potion> Potion::make_potion(std::pair<int, int>&& pos) {
         default:
             break;
     }
-    */
-            return std::unique_ptr<TempPotion>(new TempPotion{std::move(pos), 0, 5, 0});
     std::cerr << "Error: Making a potion that doesn't exist\n";
     return nullptr;
 }
