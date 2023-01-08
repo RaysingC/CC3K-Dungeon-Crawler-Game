@@ -25,7 +25,7 @@ class Chamber {
     // why does std::map not take const & keys???
     std::map<const std::pair<int, int>, std::unique_ptr<Item>> items; // consider removing pos field from items???
     std::map<const std::pair<int, int>, std::unique_ptr<ContactItem>> citems;
-    std::map<const std::pair<int, int>, std::unique_ptr<Enemy>> enemies;
+    std::vector<std::unique_ptr<Enemy>> enemies; // pair is not const because enemies move
 
     Cell& cell_in_dir(int, int, Direction) noexcept; // invalid or out of bounds returns the current cell
 

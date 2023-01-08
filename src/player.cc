@@ -74,19 +74,19 @@ std::tuple<int, int, int, char, int> Player::get_stats() const noexcept {
 void Player::tank(int enemyAttack) noexcept {
     auto [ hp, atk, def] = stats.get_tuple();
     int totalDamage = ceil(100.0 / (100.0 + static_cast<double>(def) * static_cast<double>(enemyAttack)));
-    stats.change_hp(totalDamage);
+    stats.change_hp(-totalDamage);
 }
 
 void PlayerDecorator::tank(int enemyAttack) noexcept {
     auto [ hp, atk, def] = stats.get_tuple();
     int totalDamage = ceil(100.0 / (100.0 + static_cast<double>(def) * static_cast<double>(enemyAttack)));
-    stats.change_hp(totalDamage);
-    playerptr->change_hp(totalDamage);
+    stats.change_hp(-totalDamage);
+    playerptr->change_hp(-totalDamage);
 }
 
 // you can see how decorators of Players don't actually need their own stats...
 void BarrierSuitPlayer::tank(int enemyAttack) noexcept {
     auto [ hp, atk, def, race, gold ] = get_stats();
     int totalDamage = ceil(100.0 / (100.0 + static_cast<double>(def) * static_cast<double>(enemyAttack)));
-    stats.change_hp((totalDamage + 1) / 2);
+    stats.change_hp(-(totalDamage + 1) / 2);
 }

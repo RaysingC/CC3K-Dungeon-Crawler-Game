@@ -2,6 +2,7 @@
 #include <cmath>
 #include "direction.h"
 #include "player.h"
+#include "chambersettings.h"
 
 Enemy::Enemy(int maxhp, int atk, int def, char type, std::pair<int, int>&& pos, bool hostile = true)
     : stats{maxhp, atk, def, std::move(pos)}, type{type}, playerInRangeLastTurn{false},
@@ -9,10 +10,16 @@ Enemy::Enemy(int maxhp, int atk, int def, char type, std::pair<int, int>&& pos, 
 
 Enemy::~Enemy() {}
 
+bool Enemy::is_alive() const noexcept {
+    const auto& [ hp, atk, def ] = stats.get_tuple();
+    if (hp == 0) return false;
+    return true;
+}
+
 void Enemy::tank(int playerAttack) noexcept {
     auto [ hp, atk, def] = stats.get_tuple();
     int totalDamage = ceil(100.0 / (100.0 + static_cast<double>(def) * static_cast<double>(atk)));
-    stats.change_hp(totalDamage);
+    stats.change_hp(-totalDamage);
 }
 
 bool Enemy::player_in_range(const std::shared_ptr<Player>& playerptr) noexcept {
@@ -102,3 +109,21 @@ class Phoenix : public Enemy {
 public:
     Phoenix(std::pair<int, int>&& pos) : Enemy(50, 35, 20, 'X', std::move(pos)) {}
 };
+
+std::unique_ptr<Enemy> Enemy::make_enemy(std::pair<int, int>&& pos) {
+    std::default_random_engine& rng{ChamberSettings::get_generator()};
+    int randInt = rng() % 18; // terrible style, what is 18? randInt??
+    if (randInt < 4) {
+        return std::unique_ptr<Enemy>(new Werewolf{std::move(pos)});
+    } else if (randInt < 7) {
+        return std::unique_ptr<Enemy>(new Vampire{std::move(pos)});
+    } else if (randInt < 12) {
+        return std::unique_ptr<Enemy>(new Goblin{std::move(pos)});
+    } else if (randInt < 14) {
+        return std::unique_ptr<Enemy>(new Troll{std::move(pos)});
+    } else if (randInt < 16) {
+        return std::unique_ptr<Enemy>(new Phoenix{std::move(pos)});
+    } else {
+        return std::unique_ptr<Enemy>(new Merchant{std::move(pos)});
+    }
+}

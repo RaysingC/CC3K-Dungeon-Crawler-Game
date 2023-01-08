@@ -16,9 +16,9 @@ protected:
 
 public:
     virtual ~Enemy() = 0;
-    static std::unique_ptr<Enemy> make_enemy(char, std::pair<int, int>&&);
+    static std::unique_ptr<Enemy> make_enemy(std::pair<int, int>&&);
     std::pair<int, int> get_pos() const noexcept { return stats.get_pos(); }
-    char get_type() const noexcept { return type; }
+    char get_icon() const noexcept { return type; }
 
     // called per turn
     virtual void move(Direction dir) noexcept { stats.move(dir); }
@@ -27,11 +27,7 @@ public:
 
     // combat logic
     virtual void tank(int) noexcept;
-    bool is_alive() const noexcept {
-        const auto& [ hp, atk, def ] = stats.get_tuple();
-        if (hp <= 0) return true;
-        return false;
-    }
+    bool is_alive() const noexcept;
     virtual bool is_hostile() const noexcept { return hostile; }
     virtual std::unique_ptr<ContactItem> drop_item() const {
         return nullptr;

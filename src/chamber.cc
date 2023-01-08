@@ -52,6 +52,13 @@ static void addCellsToChamber(CellArray& tempgrid, vecOfCoords& chamber, int x, 
 }
 
 void Chamber::spawn_all(std::shared_ptr<Player>&& playerptr) {
+    for (auto& cell : grid) {
+        if (cell.get_type() == '.'
+            || cell.get_type() == '+'
+            || cell.get_type() == '#') {
+            cell.unoccupy();
+        }
+    }
     items.clear();
     citems.clear();
     enemies.clear();
@@ -96,7 +103,7 @@ void Chamber::spawn_all(std::shared_ptr<Player>&& playerptr) {
     citems.insert({chambers[1].back(), std::move(stairs)});
     chambers[1].pop_back();
 
-    // 4. spawn potions and gold
+    // 4. spawn 10 potions
     std::default_random_engine& rng{ChamberSettings::get_generator()};
     for (int i = 0; i < 10; ++i) {
         if (numChambers == 0) break;
@@ -117,6 +124,7 @@ void Chamber::spawn_all(std::shared_ptr<Player>&& playerptr) {
         }
     }
 
+    // 5. spawn 10 piles of gold
     for (int i = 0; i < 10; ++i) {
         if (numChambers == 0) break;
         int targetChamber = rng() % numChambers;
@@ -124,6 +132,25 @@ void Chamber::spawn_all(std::shared_ptr<Player>&& playerptr) {
         citems.insert(
             { chambers[targetChamber].back(),
                 ContactItem::make_contact_item('g', std::move(chambers[targetChamber].back()), false) }
+        );
+
+        chambers[targetChamber].pop_back();
+        if (chambers[targetChamber].empty()) {
+            std::swap(chambers[targetChamber], chambers.back());
+            chambers.pop_back();
+            --numChambers;
+        }
+    }
+
+    // 6. spawn 20 enemies
+    for (int i = 0; i < 20; ++i) {
+        if (numChambers == 0) break;
+        int targetChamber = rng() % numChambers;
+        const auto [ x, y ] = chambers[targetChamber].back();
+        grid[y * ChamberSettings::width() + x].occupy();
+
+        enemies.emplace_back(
+            Enemy::make_enemy(std::move(chambers[targetChamber].back()))
         );
 
         chambers[targetChamber].pop_back();
@@ -166,30 +193,38 @@ void Chamber::next_turn() /*noexcept*/ {
         }
     } else if (action == 'a') {
         std::pair<int, int> targetCoords = DirUtils::new_coords(player->get_pos(), dir);
-        auto it = enemies.find(targetCoords);
-        if (it != enemies.end()) {
-            auto& targetEnemyPtr = std::get<1>(*it);
-            auto [ hp, atk, def, race, gold ] = player->get_stats();
-            targetEnemyPtr->tank(atk);
-            if (!targetEnemyPtr->is_alive()) {
-                enemies.erase(targetCoords);
-                targetCell.unoccupy();
+        for (auto it = enemies.rbegin(); it != enemies.rend(); ++it) {
+            std::unique_ptr<Enemy>& enemyptr = *it;
+            if (enemyptr->get_pos() == targetCoords) {
+                auto [ hp, atk, def, race, gold ] = player->get_stats();
+                enemyptr->tank(atk);
+                if (enemyptr->is_alive()) {
+                    std::unique_ptr<ContactItem> droppedItem = enemyptr->drop_item();
+                    if (droppedItem) {
+                        citems.insert({targetCoords, std::move(droppedItem)});
+                    }
+                    std::swap(enemyptr, enemies.back());
+                    enemies.pop_back();
+                    targetCell.unoccupy();
+                }
             }
         }
     }
 
     // call passives on player and enemies, check descend logic?
-    for (auto& [ pos, enemyptr ] : enemies) {
+    for (auto& enemyptr : enemies) {
         if (enemyptr->player_in_range(player) && enemyptr->is_hostile()) {
             enemyptr->attempt_attack(player);
         } else {
             enemyptr->passive();
             Direction dir = DirUtils::rand_dir();
-            auto [ x, y ] = pos;
+            auto [ x, y ] = enemyptr->get_pos();
             if (cell_in_dir(x, y, dir).is_occupied()) {
                 dir = Direction::X;
             }
+            grid[y * ChamberSettings::width() + x].unoccupy();
             enemyptr->move(dir);
+            cell_in_dir(x, y, dir).occupy();
         }
     }
 }
@@ -201,17 +236,23 @@ void Chamber::print() const noexcept {
         display[i] = grid[i].get_type();
     }
 
+    // items
     for (const auto& [ pos, citemptr ] : citems) {
         const auto [ x, y ] = pos;
         display[y * ChamberSettings::width() + x] = citemptr->get_icon();
     }
 
+    // contact items
     for (const auto& [ pos, itemptr ] : items) {
         const auto [ x, y ] = pos;
         display[y * ChamberSettings::width() + x] = itemptr->get_icon();
     }
 
-    // generate enemies
+    // enemies
+    for (const auto& enemyptr : enemies) {
+        const auto [ x, y ] = enemyptr->get_pos();
+        display[y * ChamberSettings::width() + x] = enemyptr->get_icon();
+    }
 
     const auto [ playerx, playery ] = player->get_pos();
     display[playery * ChamberSettings::width() + playerx] = '@';
