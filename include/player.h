@@ -11,7 +11,6 @@ protected:
     char race;
     int gold;
     Player(int, int, int, char, std::pair<int, int>&&);
-    // virtual void trigger(); This will be for gold pickups
 
 public:
     virtual ~Player() = 0;
@@ -21,15 +20,11 @@ public:
 
     virtual void move(Direction dir) noexcept { stats.move(dir); }
 
-    // these forwarding functions are so pointless, just use inheritance
-    // and get rid of the stats object...
-    // note to self: prefer inheritance over composition when I want to
-    //   manipulate the data fields directly from the outside class
     void change_hp(int change) noexcept { stats.change_hp(change); }
     void change_atk(int change) noexcept { stats.change_atk(change); }
     void change_def(int change) noexcept { stats.change_def(change); }
     std::pair<int, int> get_pos() const noexcept { return stats.get_pos(); }
-    void set_pos(std::pair<int, int>&& pos) noexcept { stats.set_pos(std::move(pos)); } // this is so bad it's literally only used once in chamber.cc
+    void set_pos(std::pair<int, int>&& pos) noexcept { stats.set_pos(std::move(pos)); }
 
     // Potion logic
     virtual std::shared_ptr<Player> remove_effects() noexcept = 0;
@@ -38,14 +33,8 @@ public:
     virtual void tank(int) noexcept;
 };
 
-// I will allow the decorator constructors to be public because
-// they require a reference to an existing playerptr, which the user
-// needs to initialize to a player created through the factory method
 class PlayerDecorator : public Player {
 protected:
-    // Decorators should not have unique_ptrs to objects, think ownership semantics
-    // 1. if the object was stack allocated, unique_ptr ends up calling delete on a stack object
-    // 2. the decorator is not responsible for deleting the inside objects (decorators can be stripped off)
     std::shared_ptr<Player> playerptr;
 
 public:

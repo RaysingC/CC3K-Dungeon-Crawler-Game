@@ -3,8 +3,6 @@
 #include "player.h"
 #include <iostream>
 
-// potion class doesn't actually need all those fields,
-// consider moving some to derived classes
 class Potion : public Item {
 protected:
     enum PotionType { RH, BA, BD, PH, WA, WD, numUniquePotions };
@@ -20,11 +18,8 @@ public:
     }
 };
 
-// should this be polymorphic to Potion?
 class TempPotion : public Potion {
 public:
-    // I will allow this because we're inside a .cc file and
-    // other classes can't see this class and call the constructor
     using Potion::Potion;
     void use(std::shared_ptr<Player>&) override;
 };
@@ -32,8 +27,6 @@ public:
 std::unique_ptr<Potion> Potion::make_potion(std::pair<int, int>&& pos) {
     std::default_random_engine& rng{ChamberSettings::get_generator()};
     PotionType pt = static_cast<PotionType>(rng() % PotionType::numUniquePotions);
-    // I have to initialize unique_ptrs like this because all the constructors are inaccessible
-    // the forwarding function make_unique can't access their constructors
     switch (pt) {
         case RH:
             return std::unique_ptr<Potion>(new Potion{std::move(pos), static_cast<int>(rng() % 10) + 1, 0, 0});
@@ -74,8 +67,6 @@ void TempPotion::use(std::shared_ptr<Player>& playerptr) {
         defChange = abs(defChange);
     }
     playerptr->change_hp(hpChange);
-    // I can't reassign *playerptr by value because playerptr was initialized with a Player*
-    // so it's still using the Player vptr! I have to overwrite playerptr to use a different vptr
     playerptr = std::shared_ptr<Player>(new TempPotionedPlayer{playerptr, atkChange, defChange});
 }
 
@@ -91,7 +82,7 @@ class GoldPile : public ContactItem {
     int value;
     GoldPile(std::pair<int, int>&& pos, int value) : ContactItem(std::move(pos), 'G'), value{value} {}
     friend std::unique_ptr<ContactItem>
-        ContactItem::make_goldpile(int, std::pair<int, int>&&); // really?
+        ContactItem::make_goldpile(int, std::pair<int, int>&&);
 
 public:
     static std::unique_ptr<ContactItem> make_goldpile(std::pair<int, int>&&, bool);

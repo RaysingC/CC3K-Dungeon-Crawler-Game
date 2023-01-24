@@ -13,7 +13,6 @@ public:
     }
 };
 
-// plan: overload use() and trigger() for class abilities?
 class HumanPlayer : public ConcretePlayer {
 public:
     HumanPlayer(std::pair<int, int>&& pos)
@@ -24,7 +23,6 @@ class ElfPlayer : public ConcretePlayer {
 public:
     ElfPlayer(std::pair<int, int>&& pos)
         : ConcretePlayer(140, 30, 10, 'e', std::move(pos)) {}
-    // void use(Direction) override;
 };
 
 class DwarfPlayer : public ConcretePlayer {
@@ -41,16 +39,13 @@ public:
     OrcPlayer(std::pair<int, int>&& pos)
         : ConcretePlayer(180, 30, 25, 'o', std::move(pos)) {}
     void change_gold(int amount) override {
-        amount >= 0 ? gold += (amount + 1) / 2 : gold += amount; // round up
+        amount >= 0 ? gold += (amount + 1) / 2 : gold += amount;
     }
 };
-
-// inlines only work in the header file
 
 Player::Player(int maxhp, int atk, int def, char race, std::pair<int, int>&& pos)
     : stats{maxhp, atk, def, std::move(pos)}, race{race}, gold{0} {}
 
-// race is checked to be valid by game.cc
 std::shared_ptr<Player> Player::make_player(char race, std::pair<int, int>&& pos) noexcept {
     if (race == 'h') {
         return std::make_shared<HumanPlayer>(std::move(pos));
@@ -84,7 +79,6 @@ void PlayerDecorator::tank(int enemyAttack) noexcept {
     playerptr->change_hp(-totalDamage);
 }
 
-// you can see how decorators of Players don't actually need their own stats...
 void BarrierSuitPlayer::tank(int enemyAttack) noexcept {
     auto [ hp, atk, def, race, gold ] = get_stats();
     int totalDamage = ceil(100.0 / (100.0 + static_cast<double>(def) * static_cast<double>(enemyAttack)));

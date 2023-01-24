@@ -22,7 +22,6 @@ static std::string extract_layout(const std::string& layoutFile) {
 Game::Game(const std::string& layoutFile)
     : chamber{std::move(extract_layout(layoutFile))} {}
 
-// consider better exception handling
 void Game::prompt_race() {
     char r;
     while (std::cin >> r) {

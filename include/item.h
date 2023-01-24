@@ -6,7 +6,6 @@
 
 class Player;
 
-// consider removing pos field it's handled by chamber.cc
 class Item {
 protected:
     const std::pair<int, int> pos;
@@ -20,8 +19,6 @@ public:
     char get_icon() const noexcept { return icon; }
 };
 
-// ContactItem should not inherit publicly from Item because when
-// Items are used they disappear (this is not true of ContactItems)
 class ContactItem {
 protected:
     const std::pair<int, int> pos;

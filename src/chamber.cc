@@ -7,7 +7,6 @@
 #include <algorithm>
 #include "enemy.h"
 
-// bounds checking is applied here so players don't cause a segfault when moving at the edges
 Cell& Chamber::cell_in_dir(int x, int y, Direction dir) noexcept {
     auto [ newx, newy ] = DirUtils::new_coords(std::make_pair(x, y), dir);
     return grid[newy * ChamberSettings::width() + newx];
@@ -32,7 +31,7 @@ CellArray make_grid(const std::string& layout) {
 Chamber::Chamber(const std::string& layout) : race{'h'}, grid{make_grid(layout)},
     playerNextAction{std::make_pair('m', Direction::X)}, player{nullptr}, items{}, citems{} {}
 
-void Chamber::set_player_action(char action, Direction dir) /*noexcept*/ {
+void Chamber::set_player_action(char action, Direction dir) {
     auto& [ oldaction, olddir ] = playerNextAction;
     oldaction = action;
     olddir = dir;
@@ -65,7 +64,7 @@ void Chamber::spawn_all(std::shared_ptr<Player>&& playerptr) {
 
     // 1. number chambers
     std::vector<vecOfCoords> chambers;
-    CellArray tempgrid = grid; // making a tempgrid is slow and heavy
+    CellArray tempgrid = grid;
 
     for (int y = 0; y < ChamberSettings::height(); ++y) {
         for (int x = 0; x < ChamberSettings::width(); ++x) {
@@ -162,7 +161,7 @@ void Chamber::spawn_all(std::shared_ptr<Player>&& playerptr) {
     }
 }
 
-void Chamber::next_turn() /*noexcept*/ {
+void Chamber::next_turn() {
     auto [ action, dir ] = playerNextAction;
     const auto [ playerx, playery ] = player->get_pos();
     Cell& currentCell = grid[playery * ChamberSettings::width() + playerx];
@@ -211,7 +210,7 @@ void Chamber::next_turn() /*noexcept*/ {
         }
     }
 
-    // call passives on player and enemies, check descend logic?
+    // call passives on player and enemies, check descend logic
     for (auto& enemyptr : enemies) {
         if (enemyptr->player_in_range(player) && enemyptr->is_hostile()) {
             enemyptr->attempt_attack(player);
@@ -261,7 +260,7 @@ void Chamber::print() const noexcept {
         for (int x = 0; x < ChamberSettings::width(); ++x) {
             char cell = display[y * ChamberSettings::width() + x];
             if (cell == '@') {
-                std::cout << "\e[1;36m@\e[1;0m"; // figure out a general way to enable colors on icons
+                std::cout << "\e[1;36m@\e[1;0m";
             } else {
                 std::cout << cell;
             }

@@ -33,12 +33,6 @@ namespace DirUtils {
         }
     }
 
-    /*
-    bool valid_dir(const std::string& dir) {
-        return str_input_to_dir(dir) != Direction::INVALID;
-    }
-    */
-
     bool valid_dir_input(const std::string& dir) noexcept {
         Direction d = str_input_to_dir(dir);
         return d != Direction::INVALID && d != Direction::X;
